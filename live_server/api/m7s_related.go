@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"io/ioutil"
 	"live_server/settings"
 	"log"
@@ -17,65 +18,75 @@ func PushVideoToStream(c *gin.Context) {
 	streamID := c.PostForm("streamID")
 	path := c.PostForm("path")
 
-	result, ok := settings.LiveList[streamID]
+	filterGet := bson.D{{"stream_id", streamID}}
+	var result settings.Live
+	err := coll.FindOne(context.TODO(), filterGet).Decode(&result)
 
-	if ok {
-		// Create stream on m7s
-		params := url.Values{}
-		params.Set("streamPath", result.StreamID)
-		params.Set("dump", path)
-		parseURL, err := url.Parse(settings.CreateStreamURL + strings.Split(path, ".")[1])
-		if err != nil {
-			log.Println("err")
-		}
-
-		parseURL.RawQuery = params.Encode()
-		urlPathWithParams := parseURL.String()
-		fmt.Println(urlPathWithParams)
-		resp, err := http.Get(urlPathWithParams)
-		if err != nil {
-			log.Println("err")
-		}
-		defer resp.Body.Close()
-		b, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Println("err")
-		}
-
-		result.IsStreamed = true
-		settings.LiveList[streamID] = result
-		c.String(http.StatusOK, string(b))
-
-		StartRecording(streamID, "flv")
-		fmt.Println("Start Recording " + streamID)
-
-		filter := bson.D{{"stream_id", streamID}}
-
-		update := bson.D{{"$set", settings.LiveList[streamID]}}
-
-		res, err := settings.Coll.UpdateOne(context.TODO(), filter, update)
-		if err != nil {
-			fmt.Println("err", err)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, "Not found in DB")
 			return
 		}
-		fmt.Println("Update: ", res)
-
-	} else {
-		c.String(http.StatusNotFound, "")
-
+		panic(err)
 	}
+
+	// Create stream on m7s
+	params := url.Values{}
+	params.Set("streamPath", result.StreamID)
+	params.Set("dump", path)
+	parseURL, err := url.Parse(settings.CreateStreamURL + strings.Split(path, ".")[1])
+	if err != nil {
+		log.Println("err")
+	}
+
+	parseURL.RawQuery = params.Encode()
+	urlPathWithParams := parseURL.String()
+	fmt.Println(urlPathWithParams)
+	resp, err := http.Get(urlPathWithParams)
+	if err != nil {
+		log.Println("err")
+	}
+	defer resp.Body.Close()
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("err")
+	}
+
+	result.IsStreamed = true
+	StartRecording(streamID, "flv")
+	fmt.Println("Start Recording " + streamID)
+
+	filter := bson.D{{"stream_id", streamID}}
+	update := bson.D{{"$set", result}}
+	res, err := coll.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		fmt.Println("err", err)
+		return
+	}
+	c.String(http.StatusOK, string(b))
+	fmt.Println("Update: ", res)
 
 }
 
 func PushStreamToRtmp(c *gin.Context) {
-	streamPath := c.PostForm("stream_id")
+	streamID := c.PostForm("stream_id")
 	rtmpAddr := c.PostForm("rtmp_addr")
 
-	result, ok := settings.LiveList[streamPath]
+	filterGet := bson.D{{"streamID", streamID}}
+	var result settings.Live
+	err := coll.FindOne(context.TODO(), filterGet).Decode(&result)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, "Not found in DB")
+			return
+		}
+		panic(err)
+	}
 
 	fmt.Println(result)
 
-	if ok && result.IsStreamed {
+	if result.IsStreamed {
 		// Create stream on m7s
 		params := url.Values{}
 		parseURL, err := url.Parse(settings.PushURL)
@@ -83,7 +94,7 @@ func PushStreamToRtmp(c *gin.Context) {
 			log.Println("err")
 		}
 		params.Set("target", rtmpAddr)
-		params.Set("streamPath", streamPath)
+		params.Set("streamPath", streamID)
 
 		parseURL.RawQuery = params.Encode()
 		urlPathWithParams := parseURL.String()
@@ -100,7 +111,7 @@ func PushStreamToRtmp(c *gin.Context) {
 		c.String(http.StatusOK, string(b))
 
 	} else {
-		c.String(http.StatusNotFound, "")
+		c.String(http.StatusNotFound, "Live not streamed yet")
 
 	}
 

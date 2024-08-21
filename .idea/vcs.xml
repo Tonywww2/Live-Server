@@ -2,8 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/live_server/engine" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/live_server/monibuca" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/live_server/plugin-rtmp" vcs="Git" />
   </component>
 </project>

@@ -1,7 +1,6 @@
 package settings
 
 import (
-	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
 
@@ -14,11 +13,7 @@ const (
 	RecordStopURL   = "http://localhost:8080/record/api/stop"
 	EndStreamURL    = "http://localhost:8080/api/closestream"
 	MongodbUri      = "mongodb://admin:admin@localhost:27017/?retryWrites=true&w=majority"
-)
-
-var (
-	LiveList = make(map[string]Live)
-	Coll     *mongo.Collection
+	Dbname          = "live_list"
 )
 
 type Live struct {

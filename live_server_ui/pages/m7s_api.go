@@ -83,7 +83,7 @@ func PushRtmpPage() *container.TabItem {
 		pushButton,
 	)
 
-	return container.NewTabItem("Push video to Live", pushRtmp)
+	return container.NewTabItem("Push to Rtmp", pushRtmp)
 }
 
 func EndStreamPage() *container.TabItem {

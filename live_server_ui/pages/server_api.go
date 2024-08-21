@@ -2,12 +2,13 @@ package pages
 
 import (
 	"encoding/json"
+	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"io/ioutil"
+	"io"
 	"live_server_ui/settings"
 	"net/http"
 	"net/url"
@@ -59,24 +60,26 @@ func CreatGetAllPage() *container.TabItem {
 			dialog.ShowError(err, settings.MainWindow)
 		}
 
-		var result map[string]map[string]interface{}
-		body, err := ioutil.ReadAll(response.Body)
+		var result []map[string]interface{}
+		body, err := io.ReadAll(response.Body)
 		if err == nil {
 			err = json.Unmarshal(body, &result)
 		}
 
+		fmt.Println(result)
+
 		resultText := "Result: \n"
 		i := 0
 		settings.CachedLives = make([]string, 0)
-		for k, v := range result {
+		for _, v := range result {
 			text := "\"" + settings.ToString(v["Name"]) + "\", " +
 				"\"" + settings.ToString(v["Poster"]) + "\", " +
 				"\"" + settings.ToString(v["StartTime"]) + "\", " +
 				"\"" + settings.ToString(v["RtmpAddr"]) + "\", " +
 				settings.ToString(v["IsStreamed"])
-			resultText += "\"" + k + "\"" + "\n" + text + "\n\n"
+			resultText += "\"" + settings.ToString(v["StreamID"]) + "\"" + "\n" + text + "\n\n"
 
-			settings.CachedLives = append(settings.CachedLives, settings.ToString(v["Name"])+"//"+k)
+			settings.CachedLives = append(settings.CachedLives, settings.ToString(v["Name"])+"//"+settings.ToString(v["StreamID"]))
 			i++
 		}
 		resultLabel.SetText(resultText)
