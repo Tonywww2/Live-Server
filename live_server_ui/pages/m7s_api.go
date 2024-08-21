@@ -6,10 +6,11 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"live_server_ui/settings"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"live_server_ui/settings"
 )
 
 func PushVideoPage() *container.TabItem {

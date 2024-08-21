@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"live_server/api"
 )
 
@@ -13,5 +14,8 @@ func main() {
 	r.POST("/pushStreamToRtmp", api.PushStreamToRtmp)
 	r.POST("/endStream", api.EndStreamAPI)
 
-	r.Run(":8082")
+	err := r.Run(":8082")
+	if err != nil {
+		return
+	}
 }

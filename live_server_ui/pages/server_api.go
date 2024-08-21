@@ -9,10 +9,11 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"io"
-	"live_server_ui/settings"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"live_server_ui/settings"
 )
 
 func CreateLivePage() *container.TabItem {
@@ -58,6 +59,7 @@ func CreatGetAllPage() *container.TabItem {
 		if err != nil || response.StatusCode != 200 {
 			//fmt.Println("Error")
 			dialog.ShowError(err, settings.MainWindow)
+			panic(err)
 		}
 
 		var result []map[string]interface{}

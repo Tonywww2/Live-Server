@@ -7,11 +7,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"io/ioutil"
-	"live_server/settings"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"live_server/settings"
 )
 
 func PushVideoToStream(c *gin.Context) {
