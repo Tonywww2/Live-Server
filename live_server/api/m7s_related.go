@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"io/ioutil"
+	"live_server/db"
 	"log"
 	"net/http"
 	"net/url"
@@ -21,7 +22,7 @@ func PushVideoToStream(c *gin.Context) {
 
 	filterGet := bson.D{{"stream_id", streamID}}
 	var result settings.Live
-	err := coll.FindOne(context.TODO(), filterGet).Decode(&result)
+	err := db.LiveColl.FindOne(context.TODO(), filterGet).Decode(&result)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -59,7 +60,7 @@ func PushVideoToStream(c *gin.Context) {
 
 	filter := bson.D{{"stream_id", streamID}}
 	update := bson.D{{"$set", result}}
-	res, err := coll.UpdateOne(context.TODO(), filter, update)
+	res, err := db.LiveColl.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		fmt.Println("err", err)
 		return
@@ -75,7 +76,7 @@ func PushStreamToRtmp(c *gin.Context) {
 
 	filterGet := bson.D{{"streamID", streamID}}
 	var result settings.Live
-	err := coll.FindOne(context.TODO(), filterGet).Decode(&result)
+	err := db.LiveColl.FindOne(context.TODO(), filterGet).Decode(&result)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {

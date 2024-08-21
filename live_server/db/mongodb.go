@@ -16,7 +16,7 @@ var (
 	MongoDatabase string
 )
 
-func init() {
+func InitDB() {
 	mongoUri := settings.MongodbUri
 	if mongoUri == "" {
 		log.Fatal("MongoDB URI is not provided in the configuration")

@@ -2,11 +2,16 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"live_server/db"
 
 	"live_server/api"
 )
 
 func main() {
+	db.InitDB()
+
+	db.InitRouters()
+
 	r := gin.Default()
 	r.POST("/createLive", api.CreateLive)
 	r.GET("/getAllLive", api.GetAllLive)
