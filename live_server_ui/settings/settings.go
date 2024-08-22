@@ -8,17 +8,23 @@ import (
 )
 
 const (
-	CreateLiveURL = "http://localhost:8082/createLive"
-	GetAllLiveURL = "http://localhost:8082/getAllLive"
-	ToStreamURL   = "http://localhost:8082/pushVideoToStream"
-	ToRtmpURL     = "http://localhost:8082/pushStreamToRtmp"
-	EndStreamUrl  = "http://localhost:8082/endStream"
+	CreateLiveURL      = "http://localhost:8082/createLive"
+	GetAllLiveURL      = "http://localhost:8082/getAllLive"
+	FuzzySearchLiveURL = "http://localhost:8082/fuzzySearchLive"
+	ToStreamURL        = "http://localhost:8082/pushVideoToStream"
+	ToRtmpURL          = "http://localhost:8082/pushStreamToRtmp"
+	EndStreamUrl       = "http://localhost:8082/endStream"
 )
 
 var (
-	CachedLives   []string
-	StreamIdEntry *widget.SelectEntry
-	MainWindow    fyne.Window
+	CachedLivesOriginal []map[string]interface{}
+	CachedLives         []string
+	StreamIdEntry       *widget.SelectEntry
+	MainWindow          fyne.Window
+	ClientWindow        fyne.Window
+
+	NewLiveWindow  fyne.Window
+	LiveInfoWindow fyne.Window
 )
 
 type LoadedMap interface {

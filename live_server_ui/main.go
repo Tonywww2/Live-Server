@@ -14,19 +14,43 @@ import (
 func main() {
 	a := app.NewWithID("live_server_ui")
 	settings.MainWindow = a.NewWindow("Main")
-	settings.MainWindow.Resize(fyne.NewSize(720, 480))
+	settings.MainWindow.Resize(fyne.NewSize(840, 540))
 	settings.MainWindow.SetMaster()
+	settings.MainWindow.CenterOnScreen()
+
+	settings.NewLiveWindow = a.NewWindow("Create")
+	settings.NewLiveWindow.Resize(fyne.NewSize(320, 320))
+	settings.NewLiveWindow.SetCloseIntercept(func() {
+		settings.NewLiveWindow.Hide()
+	})
+
+	settings.LiveInfoWindow = a.NewWindow("Info")
+	settings.LiveInfoWindow.Resize(fyne.NewSize(520, 320))
+	settings.LiveInfoWindow.SetCloseIntercept(func() {
+		settings.LiveInfoWindow.Hide()
+	})
 
 	settings.StreamIdEntry = widget.NewSelectEntry(settings.CachedLives)
 
-	tab := container.NewAppTabs(
-		pages.CreateLivePage(),
-		pages.CreatGetAllPage(),
+	//tab := container.NewAppTabs(
+	//	pages.CreateLivePage(),
+	//	pages.CreatGetAllPage(),
+	//	pages.PushVideoPage(),
+	//	pages.PushRtmpPage(),
+	//	pages.EndStreamPage(),
+	//)
+	//settings.MainWindow.SetContent(tab)
+
+	settings.MainWindow.SetContent(pages.CreateClientContainer())
+
+	settings.NewLiveWindow.SetContent(container.NewAppTabs(pages.CreateLivePage()))
+
+	settings.LiveInfoWindow.SetContent(container.NewAppTabs(
+		pages.CreateLiveInfoContainer(),
 		pages.PushVideoPage(),
 		pages.PushRtmpPage(),
 		pages.EndStreamPage(),
-	)
-	settings.MainWindow.SetContent(tab)
+	))
 
 	go func() {
 		for range time.Tick(time.Second) {
