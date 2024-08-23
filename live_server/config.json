@@ -1,0 +1,10 @@
+{
+  "rtmp_push_pull_url": "rtmp://localhost/",
+  "create_stream_url": "http://localhost:8080/api/replay/",
+  "push_url": "http://localhost:8080/rtmp/api/push",
+  "record_start_url": "http://localhost:8080/record/api/start",
+  "record_stop_url": "http://localhost:8080/record/api/stop",
+  "end_stream_url": "http://localhost:8080/api/closestream",
+  "mongodb_uri": "mongodb://admin:admin@localhost:27017/?retryWrites=true&w=majority",
+  "dbname": "live_list"
+}

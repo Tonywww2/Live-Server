@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"strings"
 
+	"live_server/config"
 	"live_server/settings"
 )
 
@@ -36,7 +37,7 @@ func PushVideoToStream(c *gin.Context) {
 	params := url.Values{}
 	params.Set("streamPath", result.StreamID)
 	params.Set("dump", path)
-	parseURL, err := url.Parse(settings.CreateStreamURL + strings.Split(path, ".")[1])
+	parseURL, err := url.Parse(config.Config.CreateStreamURL + strings.Split(path, ".")[1])
 	if err != nil {
 		log.Println("err")
 	}
@@ -91,7 +92,7 @@ func PushStreamToRtmp(c *gin.Context) {
 	if result.IsStreamed {
 		// Create stream on m7s
 		params := url.Values{}
-		parseURL, err := url.Parse(settings.PushURL)
+		parseURL, err := url.Parse(config.Config.PushURL)
 		if err != nil {
 			log.Println("err")
 		}
@@ -130,7 +131,7 @@ func EndStreamAPI(c *gin.Context) {
 
 	params := url.Values{}
 	params.Set("streamPath", streamPath)
-	parseURL, err := url.Parse(settings.EndStreamURL)
+	parseURL, err := url.Parse(config.Config.EndStreamURL)
 	if err != nil {
 		log.Println("err")
 	}
@@ -160,7 +161,7 @@ func StartRecording(streamPath string, tp string) {
 		tp = "flv"
 	}
 	params.Set("type", tp)
-	parseURL, err := url.Parse(settings.RecordStartURL)
+	parseURL, err := url.Parse(config.Config.RecordStartURL)
 	if err != nil {
 		log.Println("err")
 	}
@@ -181,10 +182,10 @@ func StartRecording(streamPath string, tp string) {
 }
 
 func StopRecording(streamPath string, tp string) {
-	// Start record on m7s
+	// Stop record on m7s
 	params := url.Values{}
 	params.Set("id", streamPath+"/"+tp)
-	parseURL, err := url.Parse(settings.RecordStopURL)
+	parseURL, err := url.Parse(config.Config.RecordStopURL)
 	if err != nil {
 		log.Println("err")
 	}

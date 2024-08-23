@@ -3,10 +3,13 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"live_server/api"
+	"live_server/config"
 	"live_server/db"
 )
 
 func main() {
+	config.LoadConfig()
+
 	db.InitDB()
 	db.InitRouters()
 

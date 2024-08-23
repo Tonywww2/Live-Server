@@ -8,7 +8,7 @@ import (
 	"log"
 	"time"
 
-	"live_server/settings"
+	"live_server/config"
 )
 
 var (
@@ -17,11 +17,11 @@ var (
 )
 
 func InitDB() {
-	mongoUri := settings.MongodbUri
+	mongoUri := config.Config.MongodbUri
 	if mongoUri == "" {
 		log.Fatal("MongoDB URI is not provided in the configuration")
 	}
-	dbName := settings.Dbname
+	dbName := config.Config.Dbname
 	if dbName == "" {
 		log.Fatal("MongoDB database is not provided in the configuration")
 	}

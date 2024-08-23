@@ -5,15 +5,15 @@ import (
 )
 
 const (
-	ServiceName     = "live"
-	RtmpPushPullURL = "rtmp://localhost/"
-	CreateStreamURL = "http://localhost:8080/api/replay/"
-	PushURL         = "http://localhost:8080/rtmp/api/push"
-	RecordStartURL  = "http://localhost:8080/record/api/start"
-	RecordStopURL   = "http://localhost:8080/record/api/stop"
-	EndStreamURL    = "http://localhost:8080/api/closestream"
-	MongodbUri      = "mongodb://admin:admin@localhost:27017/?retryWrites=true&w=majority"
-	Dbname          = "live_list"
+	ServiceName = "live"
+	//	RtmpPushPullURL = "rtmp://localhost/"
+	//	CreateStreamURL = "http://localhost:8080/api/replay/"
+	//	PushURL         = "http://localhost:8080/rtmp/api/push"
+	//	RecordStartURL  = "http://localhost:8080/record/api/start"
+	//	RecordStopURL   = "http://localhost:8080/record/api/stop"
+	//	EndStreamURL    = "http://localhost:8080/api/closestream"
+	//	MongodbUri      = "mongodb://admin:admin@localhost:27017/?retryWrites=true&w=majority"
+	//	Dbname          = "live_list"
 )
 
 type Live struct {

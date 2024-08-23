@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 
+	"live_server_ui/config"
 	"live_server_ui/settings"
 )
 
@@ -38,7 +39,7 @@ func PushVideoPage() *container.TabItem {
 			"streamID": {text},
 			"path":     {path.Text},
 		}
-		response, err := http.PostForm(settings.ToStreamURL, payload)
+		response, err := http.PostForm(config.Config.ToStreamURL, payload)
 		settings.TreatError(err, response)
 		//fmt.Println(response)
 	})
@@ -70,7 +71,7 @@ func PushRtmpPage() *container.TabItem {
 			"stream_id": {text},
 			"rtmp_addr": {rtmp.Text},
 		}
-		response, err := http.PostForm(settings.ToRtmpURL, payload)
+		response, err := http.PostForm(config.Config.ToRtmpURL, payload)
 		settings.TreatError(err, response)
 		//fmt.Println(response)
 	})
@@ -101,7 +102,7 @@ func EndStreamPage() *container.TabItem {
 			"streamPath": {text},
 			"type":       {"flv"},
 		}
-		response, err := http.PostForm(settings.EndStreamUrl, payload)
+		response, err := http.PostForm(config.Config.EndStreamUrl, payload)
 		settings.TreatError(err, response)
 		//fmt.Println(response)
 	})

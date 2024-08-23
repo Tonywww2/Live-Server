@@ -7,14 +7,17 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"time"
 
+	"live_server_ui/config"
 	"live_server_ui/pages"
 	"live_server_ui/settings"
 )
 
 func main() {
+	config.LoadConfig()
+
 	a := app.NewWithID("live_server_ui")
 	settings.MainWindow = a.NewWindow("Main")
-	settings.MainWindow.Resize(fyne.NewSize(840, 540))
+	settings.MainWindow.Resize(fyne.NewSize(720, 540))
 	settings.MainWindow.SetMaster()
 	settings.MainWindow.CenterOnScreen()
 

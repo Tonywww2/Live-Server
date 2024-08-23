@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"strings"
 
+	"live_server_ui/config"
 	"live_server_ui/settings"
 )
 
@@ -41,7 +42,7 @@ func CreateLivePage() *container.TabItem {
 				"name":   {nameEntry.Text},
 				"poster": {posterLabel.Text},
 			}
-			response, err := http.PostForm(settings.CreateLiveURL, payload)
+			response, err := http.PostForm(config.Config.CreateLiveURL, payload)
 			settings.TreatError(err, response)
 
 		}),
@@ -55,7 +56,7 @@ func CreatGetAllPage() *container.TabItem {
 	resultLabel.MultiLine = true
 
 	getButton := widget.NewButton("Get", func() {
-		response, err := http.Get(settings.GetAllLiveURL)
+		response, err := http.Get(config.Config.GetAllLiveURL)
 		if err != nil || response.StatusCode != 200 {
 			//fmt.Println("Error")
 			dialog.ShowError(err, settings.MainWindow)

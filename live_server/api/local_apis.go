@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"live_server/config"
 	"live_server/db"
 	"net/http"
 	"strconv"
@@ -33,7 +34,7 @@ func CreateLive(c *gin.Context) {
 				Name:      name,
 				Poster:    poster,
 				StartTime: time.Now().Round(time.Second),
-				RtmpAddr:  settings.RtmpPushPullURL + streamID,
+				RtmpAddr:  config.Config.RtmpPushPullURL + streamID,
 				StreamID:  streamID,
 			}
 
