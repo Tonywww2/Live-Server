@@ -8,6 +8,7 @@
       <excludeFolder url="file://$MODULE_DIR$/live_server/.idea/dataSources" />
       <excludeFolder url="file://$MODULE_DIR$/m7s/.m7s" />
       <excludeFolder url="file://$MODULE_DIR$/m7s/record" />
+      <excludeFolder url="file://$MODULE_DIR$/live_server/m7s" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
