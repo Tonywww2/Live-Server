@@ -2,8 +2,8 @@ package pages
 
 import (
 	"encoding/json"
-	"fmt"
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -21,10 +21,11 @@ import (
 )
 
 var (
-	currentPage   = 1
-	grid          *fyne.Container
-	backButton    fyne.CanvasObject
-	forwardButton fyne.CanvasObject
+	currentPage      = 1
+	grid             *fyne.Container
+	backButton       fyne.CanvasObject
+	forwardButton    fyne.CanvasObject
+	recordListButton fyne.CanvasObject
 
 	showingLives           []map[string]interface{}
 	showingNameLabels      [10]*widget.Label
@@ -32,6 +33,7 @@ var (
 	showingStreamingLabels [10]*widget.Label
 	infoButtons            [10]*widget.Button
 
+	searchEntry         *widget.Entry
 	pageLabel           *widget.Label
 	infoName            *widget.Label
 	infoID              *widget.Label
@@ -41,6 +43,9 @@ var (
 	infoCopyID          *widget.Button
 	infoCopyRtmp        *widget.Button
 	infoCheckRtmpStream *widget.Button
+	infoImg             *canvas.Image
+
+	imgSize = fyne.NewSize(300, 300)
 
 	idx = 0
 )
@@ -52,35 +57,10 @@ func CreateClientContainer() *fyne.Container {
 		settings.NewLiveWindow.Show()
 	})
 
-	searchEntry := widget.NewEntry()
+	searchEntry = widget.NewEntry()
 	searchEntry.SetPlaceHolder("Search For Name")
 
-	searchButton := widget.NewButtonWithIcon("Search", theme.SearchIcon(), func() {
-		params := url.Values{}
-		params.Set("name", searchEntry.Text)
-		parseURL, err := url.Parse(config.Config.FuzzySearchLiveURL)
-		if err != nil {
-			log.Println("err")
-		}
-		parseURL.RawQuery = params.Encode()
-		response, err := http.Get(parseURL.String())
-		if err != nil || response.StatusCode != 200 {
-			dialog.ShowError(err, settings.MainWindow)
-			panic(err)
-		}
-
-		var result []map[string]interface{}
-		body, err := io.ReadAll(response.Body)
-		if err == nil {
-			err = json.Unmarshal(body, &result)
-		}
-
-		//fmt.Println(result)
-		settings.CachedLivesOriginal = result
-
-		UpdateShowingLives()
-
-	})
+	searchButton := widget.NewButtonWithIcon("Search", theme.SearchIcon(), Search)
 
 	backButton = widget.NewButtonWithIcon("", theme.NavigateBackIcon(), func() {
 		currentPage = max(1, currentPage-1)
@@ -92,6 +72,26 @@ func CreateClientContainer() *fyne.Container {
 		UpdateShowingLives()
 	})
 
+	recordListButton = widget.NewButtonWithIcon("Records", theme.HistoryIcon(), func() {
+
+		response, err := http.Get(config.Config.GetRecordsUrl)
+		if err != nil {
+			dialog.ShowError(err, settings.MainWindow)
+
+		} else {
+			body, er := io.ReadAll(response.Body)
+			if er != nil {
+				dialog.ShowError(er, settings.MainWindow)
+
+			} else {
+				dialog.ShowInformation("Records", string(body), settings.MainWindow)
+
+			}
+
+		}
+
+	})
+
 	for i := 0; i < 10; i++ {
 		showingNameLabels[i] = widget.NewLabel("")
 		showingTimeLabels[i] = widget.NewLabel("")
@@ -101,9 +101,9 @@ func CreateClientContainer() *fyne.Container {
 
 	grid = container.NewGridWithRows(13,
 		container.NewGridWithColumns(3,
-			createNewLiveButton,
+			container.NewHBox(layout.NewSpacer(), createNewLiveButton),
 			searchEntry,
-			container.NewHBox(searchButton, layout.NewSpacer()),
+			container.NewHBox(searchButton, recordListButton),
 		),
 		container.NewGridWithColumns(4, widget.NewLabel("Name"), widget.NewLabel("Created Time"), widget.NewLabel("Is Streaming(ed)")),
 		createCustomHBox(gI(), showingNameLabels[idx-1], showingTimeLabels[idx-1], showingStreamingLabels[idx-1], infoButtons[idx-1]),
@@ -118,8 +118,36 @@ func CreateClientContainer() *fyne.Container {
 		createCustomHBox(gI(), showingNameLabels[idx-1], showingTimeLabels[idx-1], showingStreamingLabels[idx-1], infoButtons[idx-1]),
 		container.NewGridWithColumns(5, layout.NewSpacer(), backButton, container.NewHBox(layout.NewSpacer(), pageLabel, layout.NewSpacer()), forwardButton, layout.NewSpacer()),
 	)
-
+	Search()
 	return grid
+}
+
+func Search() {
+	params := url.Values{}
+	params.Set("name", searchEntry.Text)
+	parseURL, err := url.Parse(config.Config.FuzzySearchLiveURL)
+	if err != nil {
+		log.Println("err")
+	}
+	parseURL.RawQuery = params.Encode()
+	response, err := http.Get(parseURL.String())
+	if err != nil || response.StatusCode != 200 {
+		dialog.ShowError(err, settings.MainWindow)
+		//panic(err)
+		return
+	}
+
+	var result []map[string]interface{}
+	body, err := io.ReadAll(response.Body)
+	if err == nil {
+		err = json.Unmarshal(body, &result)
+	}
+
+	//fmt.Println(result)
+	settings.CachedLivesOriginal = result
+
+	UpdateShowingLives()
+
 }
 
 func UpdateShowingLives() {
@@ -161,10 +189,25 @@ func getFunc(i int) func() {
 			infoRtmp.SetText(settings.ToString(showingLives[i]["RtmpAddr"]))
 			infoStreamed.SetText(settings.ToString(showingLives[i]["IsStreamed"]))
 
+			img := settings.ToString(showingLives[i]["Poster"])
+			if img == "" {
+				img = "icon.png"
+			}
+			infoImg.File = img
+
 			settings.StreamIdEntry.SetText(settings.ToString(showingLives[i]["StreamID"]))
 
 			infoCheckRtmpStream.SetIcon(theme.QuestionIcon())
 
+		} else {
+			infoName.SetText("")
+			infoID.SetText("")
+			infoTime.SetText("")
+			infoRtmp.SetText("")
+			infoStreamed.SetText("")
+
+			infoImg.File = "icon.png"
+			settings.StreamIdEntry.SetText("")
 		}
 
 		settings.LiveInfoWindow.Show()
@@ -184,6 +227,10 @@ func CreateLiveInfoContainer() *container.TabItem {
 	infoRtmp = widget.NewLabel("")
 	infoStreamed = widget.NewLabel("")
 
+	infoImg = canvas.NewImageFromFile("icon.png")
+	infoImg.SetMinSize(imgSize)
+	infoImg.FillMode = canvas.ImageFillContain
+
 	infoCopyID = widget.NewButtonWithIcon("", theme.ContentCopyIcon(), func() {
 		clipboard.Write(clipboard.FmtText, []byte(infoID.Text))
 	})
@@ -195,7 +242,8 @@ func CreateLiveInfoContainer() *container.TabItem {
 	infoCheckRtmpStream = widget.NewButtonWithIcon("Streaming", theme.QuestionIcon(), func() {
 		response, err := http.Get("http://localhost:8080/rtmp/api/list")
 		if err != nil {
-			fmt.Println(err)
+			settings.TreatError(err, response)
+			return
 		}
 
 		var result []map[string]interface{}
@@ -215,22 +263,23 @@ func CreateLiveInfoContainer() *container.TabItem {
 
 	})
 
-	return container.NewTabItem("Info", container.NewGridWithRows(5,
-		container.NewGridWithColumns(2, widget.NewLabel("Name: "),
-			infoName,
-		),
-		container.NewGridWithColumns(2, widget.NewLabel("Stream ID: "),
-			container.NewHBox(infoID, layout.NewSpacer(), infoCopyID),
-		),
-		container.NewGridWithColumns(2, widget.NewLabel("Started Time: "),
-			infoTime,
-		),
-		container.NewGridWithColumns(2, widget.NewLabel("Rtmp Address: "),
-			container.NewHBox(infoRtmp, layout.NewSpacer(), infoCheckRtmpStream, infoCopyRtmp),
-		),
-		container.NewGridWithColumns(2, widget.NewLabel("Is Streamed: "),
-			infoStreamed,
-		),
+	return container.NewTabItem("Info", container.NewVBox(infoImg, container.New(layout.NewFormLayout(),
+		widget.NewLabel("Name: "),
+		infoName,
+
+		widget.NewLabel("Stream ID: "),
+		container.NewHBox(infoID, layout.NewSpacer(), infoCopyID),
+
+		widget.NewLabel("Started Time: "),
+		infoTime,
+
+		widget.NewLabel("Rtmp Address: "),
+		container.NewHBox(infoRtmp, layout.NewSpacer(), infoCheckRtmpStream, infoCopyRtmp),
+
+		widget.NewLabel("Is Streamed: "),
+		infoStreamed,
+
 		//container.NewGridWithColumns(3, infoStartStream, infoPushToRtmp, infoStopStream),
-	))
+	)))
+
 }

@@ -11,4 +11,5 @@ func OpenAPIs(r *gin.Engine) {
 	r.POST("/pushVideoToStream", PushVideoToStream)
 	r.POST("/pushStreamToRtmp", PushStreamToRtmp)
 	r.POST("/endStream", EndStreamAPI)
+	r.GET("/getRecordList", GetRecordList)
 }

@@ -28,7 +28,7 @@ func CreateLivePage() *container.TabItem {
 			defer f.Close()
 
 		}
-	}, settings.MainWindow)
+	}, settings.NewLiveWindow)
 
 	posterButton := widget.NewButtonWithIcon("", theme.FolderOpenIcon(), file.Show)
 	posterSelectBox := container.NewHBox(widget.NewLabel("Poster: "), posterButton, posterLabel)
@@ -44,7 +44,7 @@ func CreateLivePage() *container.TabItem {
 			}
 			response, err := http.PostForm(config.Config.CreateLiveURL, payload)
 			settings.TreatError(err, response)
-
+			Search()
 		}),
 	)
 
@@ -58,9 +58,9 @@ func CreatGetAllPage() *container.TabItem {
 	getButton := widget.NewButton("Get", func() {
 		response, err := http.Get(config.Config.GetAllLiveURL)
 		if err != nil || response.StatusCode != 200 {
-			//fmt.Println("Error")
 			dialog.ShowError(err, settings.MainWindow)
-			panic(err)
+			//panic(err)
+			return
 		}
 
 		var result []map[string]interface{}

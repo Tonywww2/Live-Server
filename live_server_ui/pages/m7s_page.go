@@ -23,7 +23,7 @@ func PushVideoPage() *container.TabItem {
 			path.SetText(pathUri)
 			defer f.Close()
 		}
-	}, settings.MainWindow)
+	}, settings.LiveInfoWindow)
 
 	pushButton := widget.NewButton("Push", func() {
 
@@ -42,6 +42,7 @@ func PushVideoPage() *container.TabItem {
 		response, err := http.PostForm(config.Config.ToStreamURL, payload)
 		settings.TreatError(err, response)
 		//fmt.Println(response)
+		Search()
 	})
 
 	getAllPage := container.NewVBox(

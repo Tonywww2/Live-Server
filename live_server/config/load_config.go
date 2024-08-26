@@ -15,6 +15,7 @@ type configuration struct {
 	EndStreamURL    string `json:"end_stream_url"`
 	MongodbUri      string `json:"mongodb_uri"`
 	Dbname          string `json:"dbname"`
+	M7sRecordDir    string `json:"m7s_record_dir"`
 }
 
 var (

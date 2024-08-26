@@ -13,6 +13,7 @@ type configuration struct {
 	ToStreamURL        string `json:"to_stream_url"`
 	ToRtmpURL          string `json:"to_rtmp_url"`
 	EndStreamUrl       string `json:"end_stream_url"`
+	GetRecordsUrl      string `json:"get_records_url"`
 }
 
 var (

@@ -4,5 +4,6 @@
   "fuzzy_search_live_url": "http://localhost:8082/fuzzySearchLive",
   "to_stream_url": "http://localhost:8082/pushVideoToStream",
   "to_rtmp_url": "http://localhost:8082/pushStreamToRtmp",
-  "end_stream_url": "http://localhost:8082/endStream"
+  "end_stream_url": "http://localhost:8082/endStream",
+  "get_records_url": "http://localhost:8082/getRecordList"
 }

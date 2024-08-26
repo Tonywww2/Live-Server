@@ -12,6 +12,7 @@ import (
 	"live_server/config"
 	"live_server/db"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -82,4 +83,39 @@ func fuzzySearchLive(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, results)
+}
+
+func GetRecordList(c *gin.Context) {
+	var files []string
+	files, err := GetAllFile(config.Config.M7sRecordDir, files)
+	fmt.Println(files)
+	if err != nil {
+		fmt.Println("Error reading the dir: ", err)
+		c.JSON(http.StatusInternalServerError, err)
+
+	} else {
+		c.JSON(http.StatusOK, files)
+	}
+}
+
+func GetAllFile(pathname string, s []string) ([]string, error) {
+	rd, err := os.ReadDir(pathname)
+	if err != nil {
+		fmt.Println("read dir fail:", err)
+		return s, err
+	}
+	for _, fi := range rd {
+		if fi.IsDir() {
+			fullDir := pathname + "/" + fi.Name()
+			s, err = GetAllFile(fullDir, s)
+			if err != nil {
+				fmt.Println("read dir fail:", err)
+				return s, err
+			}
+		} else {
+			fullName := pathname + "/" + fi.Name()
+			s = append(s, fullName)
+		}
+	}
+	return s, nil
 }

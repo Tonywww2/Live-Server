@@ -17,12 +17,12 @@ func main() {
 
 	a := app.NewWithID("live_server_ui")
 	settings.MainWindow = a.NewWindow("Main")
-	settings.MainWindow.Resize(fyne.NewSize(720, 540))
+	settings.MainWindow.Resize(fyne.NewSize(640, 540))
 	settings.MainWindow.SetMaster()
 	settings.MainWindow.CenterOnScreen()
 
 	settings.NewLiveWindow = a.NewWindow("Create")
-	settings.NewLiveWindow.Resize(fyne.NewSize(320, 320))
+	settings.NewLiveWindow.Resize(fyne.NewSize(480, 480))
 	settings.NewLiveWindow.SetCloseIntercept(func() {
 		settings.NewLiveWindow.Hide()
 	})

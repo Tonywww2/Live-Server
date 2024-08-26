@@ -6,5 +6,6 @@
   "record_stop_url": "http://localhost:8080/record/api/stop",
   "end_stream_url": "http://localhost:8080/api/closestream",
   "mongodb_uri": "mongodb://admin:admin@localhost:27017/?retryWrites=true&w=majority",
-  "dbname": "live_list"
+  "dbname": "live_list",
+  "m7s_record_dir": "C:/Users/12044/Documents/Work/Live-Server/m7s/record"
 }
