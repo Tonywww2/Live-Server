@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"live_server_ui/config"
@@ -20,8 +21,20 @@ func PushVideoPage() *container.TabItem {
 	file := dialog.NewFileOpen(func(f fyne.URIReadCloser, err error) {
 		if f != nil {
 			pathUri := strings.Split(f.URI().String(), "//")[1]
-			path.SetText(pathUri)
 			defer f.Close()
+
+			file, er := os.ReadFile(pathUri)
+
+			if er != nil {
+				dialog.ShowError(er, settings.LiveInfoWindow)
+				return
+			}
+
+			if strings.Split(http.DetectContentType(file), "/")[0] != "video" {
+				dialog.ShowInformation("Wrong File Type", "Wrong File Type", settings.LiveInfoWindow)
+				return
+			}
+			path.SetText(pathUri)
 		}
 	}, settings.LiveInfoWindow)
 

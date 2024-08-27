@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,47 +18,60 @@ import (
 	"live_server/settings"
 )
 
-func CreateLive(c *gin.Context) {
+type LiveApi struct {
+	LiveColl *mongo.Collection
+}
+
+// 这里是构造函数
+func NewLiveApi() *LiveApi {
+	return &LiveApi{
+		LiveColl: db.GetCollection("live_list"),
+	}
+}
+
+func (this *LiveApi) RegisterRouter(server *GinServer) {
+	// RegisterRouter /******************Start 注册直播间路由*******************/
+	server.POST("/createLive", this.CreateLive)
+	server.GET("/getAllLive", this.GetAllLive)
+	server.GET("/fuzzySearchLive", this.FuzzySearchLive)
+	server.GET("/getRecordList", this.GetRecordList)
+	// RegisterRouter /******************End 注册直播间路由*******************/
+}
+
+func (this *LiveApi) CreateLive(c *gin.Context) {
 	name := c.PostForm("name")
 	poster := c.PostForm("poster")
-
 	id := settings.GenNewID()
 	filter := bson.D{{"name", name}}
-	var result settings.Live
-	err := db.LiveColl.FindOne(context.TODO(), filter).Decode(&result)
 
-	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			streamID := settings.ServiceName + "/" + strconv.Itoa(id)
-			newLive := settings.Live{
-				Name:      name,
-				Poster:    poster,
-				StartTime: time.Now().Round(time.Second),
-				RtmpAddr:  config.Config.RtmpPushPullURL + streamID,
-				StreamID:  streamID,
-			}
+	if !db.CheckDBContains(this.LiveColl, filter) {
+		streamID := settings.ServiceName + "/" + strconv.Itoa(id)
+		newLive := settings.Live{
+			Name:      name,
+			Poster:    poster,
+			StartTime: time.Now().Round(time.Second),
+			RtmpAddr:  config.Config.RtmpPushPullURL + streamID,
+			StreamID:  streamID,
+		}
 
-			res, er := db.LiveColl.InsertOne(context.TODO(), newLive)
-			if er != nil {
-				return
-			}
-			fmt.Printf("Inserted ID: %s\n", res.InsertedID)
-
+		if db.InsertLive(this.LiveColl, &newLive) {
 			c.JSON(http.StatusOK, newLive)
 			fmt.Println(name, poster, streamID)
 
 		} else {
-			panic(err)
+			c.JSON(http.StatusNotAcceptable, "DB Error")
 		}
 
+	} else {
+		c.JSON(http.StatusConflict, "Live already found")
 	}
 
 }
 
-func GetAllLive(c *gin.Context) {
+func (this *LiveApi) GetAllLive(c *gin.Context) {
 	filter := bson.D{{}}
 	sort := bson.D{{"StartTime", 1}}
-	cursor, err := db.LiveColl.Find(context.TODO(), filter, options.Find().SetSort(sort))
+	cursor, err := this.LiveColl.Find(context.TODO(), filter, options.Find().SetSort(sort))
 
 	// Unpacks the cursor into a slice
 	var results []settings.Live
@@ -70,24 +82,24 @@ func GetAllLive(c *gin.Context) {
 	c.JSON(http.StatusOK, results)
 }
 
-func fuzzySearchLive(c *gin.Context) {
+func (this *LiveApi) FuzzySearchLive(c *gin.Context) {
 	name := c.Query("name")
 	filter := bson.D{bson.E{Key: "name",
 		Value: bson.M{"$regex": primitive.Regex{Pattern: ".*" + name + ".*", Options: "i"}}}}
 
-	cursor, err := db.LiveColl.Find(context.TODO(), filter)
+	res, err := db.FindLive(this.LiveColl, filter)
 
-	var results []settings.Live
-	if err = cursor.All(context.TODO(), &results); err != nil {
-		panic(err)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 
-	c.JSON(http.StatusOK, results)
+	c.JSON(http.StatusOK, res)
 }
 
-func GetRecordList(c *gin.Context) {
+func (this *LiveApi) GetRecordList(c *gin.Context) {
 	var files []string
-	files, err := GetAllFile(config.Config.M7sRecordDir, files)
+	files, err := this.GetAllFile(config.Config.M7sRecordDir, files)
 	fmt.Println(files)
 	if err != nil {
 		fmt.Println("Error reading the dir: ", err)
@@ -98,7 +110,7 @@ func GetRecordList(c *gin.Context) {
 	}
 }
 
-func GetAllFile(pathname string, s []string) ([]string, error) {
+func (this *LiveApi) GetAllFile(pathname string, s []string) ([]string, error) {
 	rd, err := os.ReadDir(pathname)
 	if err != nil {
 		fmt.Println("read dir fail:", err)
@@ -107,7 +119,7 @@ func GetAllFile(pathname string, s []string) ([]string, error) {
 	for _, fi := range rd {
 		if fi.IsDir() {
 			fullDir := pathname + "/" + fi.Name()
-			s, err = GetAllFile(fullDir, s)
+			s, err = this.GetAllFile(fullDir, s)
 			if err != nil {
 				fmt.Println("read dir fail:", err)
 				return s, err

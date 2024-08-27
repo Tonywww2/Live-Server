@@ -77,18 +77,17 @@ func CreateClientContainer() *fyne.Container {
 		response, err := http.Get(config.Config.GetRecordsUrl)
 		if err != nil {
 			dialog.ShowError(err, settings.MainWindow)
-
-		} else {
-			body, er := io.ReadAll(response.Body)
-			if er != nil {
-				dialog.ShowError(er, settings.MainWindow)
-
-			} else {
-				dialog.ShowInformation("Records", string(body), settings.MainWindow)
-
-			}
+			return
 
 		}
+		defer response.Body.Close()
+		body, er := io.ReadAll(response.Body)
+		if er != nil {
+			dialog.ShowError(er, settings.MainWindow)
+			return
+
+		}
+		dialog.ShowInformation("Records", string(body), settings.MainWindow)
 
 	})
 
@@ -131,9 +130,13 @@ func Search() {
 	}
 	parseURL.RawQuery = params.Encode()
 	response, err := http.Get(parseURL.String())
-	if err != nil || response.StatusCode != 200 {
+	if err != nil {
 		dialog.ShowError(err, settings.MainWindow)
-		//panic(err)
+		return
+	}
+	defer response.Body.Close()
+	if response.StatusCode != 200 {
+		dialog.ShowError(err, settings.MainWindow)
 		return
 	}
 
@@ -240,11 +243,12 @@ func CreateLiveInfoContainer() *container.TabItem {
 	})
 
 	infoCheckRtmpStream = widget.NewButtonWithIcon("Streaming", theme.QuestionIcon(), func() {
-		response, err := http.Get("http://localhost:8080/rtmp/api/list")
+		response, err := http.Get(config.Config.RtmpListUrl)
 		if err != nil {
 			settings.TreatError(err, response)
 			return
 		}
+		defer response.Body.Close()
 
 		var result []map[string]interface{}
 		body, err := io.ReadAll(response.Body)

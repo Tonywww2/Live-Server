@@ -14,6 +14,7 @@ type configuration struct {
 	ToRtmpURL          string `json:"to_rtmp_url"`
 	EndStreamUrl       string `json:"end_stream_url"`
 	GetRecordsUrl      string `json:"get_records_url"`
+	RtmpListUrl        string `json:"rtmp_list_url"`
 }
 
 var (

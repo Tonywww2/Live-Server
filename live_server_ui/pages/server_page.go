@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"live_server_ui/config"
@@ -24,6 +25,19 @@ func CreateLivePage() *container.TabItem {
 	file := dialog.NewFileOpen(func(f fyne.URIReadCloser, err error) {
 		if f != nil {
 			posterUri := strings.Split(f.URI().String(), "//")[1]
+
+			file, er := os.ReadFile(posterUri)
+
+			if er != nil {
+				dialog.ShowError(er, settings.NewLiveWindow)
+				return
+			}
+
+			if strings.Split(http.DetectContentType(file), "/")[0] != "image" {
+				dialog.ShowInformation("Wrong File Type", "Wrong File Type", settings.NewLiveWindow)
+				return
+			}
+
 			posterLabel.SetText(posterUri)
 			defer f.Close()
 
@@ -57,6 +71,7 @@ func CreatGetAllPage() *container.TabItem {
 
 	getButton := widget.NewButton("Get", func() {
 		response, err := http.Get(config.Config.GetAllLiveURL)
+		defer response.Body.Close()
 		if err != nil || response.StatusCode != 200 {
 			dialog.ShowError(err, settings.MainWindow)
 			//panic(err)

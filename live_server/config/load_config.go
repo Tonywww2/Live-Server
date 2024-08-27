@@ -16,14 +16,26 @@ type configuration struct {
 	MongodbUri      string `json:"mongodb_uri"`
 	Dbname          string `json:"dbname"`
 	M7sRecordDir    string `json:"m7s_record_dir"`
+	Port            int    `json:"port"`
 }
 
 var (
 	Config configuration
 )
 
-func LoadConfig() {
-	file, _ := os.Open("config.json")
+func LoadConfigDev() {
+	file, _ := os.Open("config_dev.json")
+	defer file.Close()
+	decoder := json.NewDecoder(file)
+	Config = configuration{}
+	err := decoder.Decode(&Config)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+}
+
+func LoadConfigTest() {
+	file, _ := os.Open("config_test.json")
 	defer file.Close()
 	decoder := json.NewDecoder(file)
 	Config = configuration{}
