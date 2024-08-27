@@ -35,19 +35,8 @@ func main() {
 
 	settings.StreamIdEntry = widget.NewSelectEntry(settings.CachedLives)
 
-	//tab := container.NewAppTabs(
-	//	pages.CreateLivePage(),
-	//	pages.CreatGetAllPage(),
-	//	pages.PushVideoPage(),
-	//	pages.PushRtmpPage(),
-	//	pages.EndStreamPage(),
-	//)
-	//settings.MainWindow.SetContent(tab)
-
 	settings.MainWindow.SetContent(pages.CreateClientContainer())
-
 	settings.NewLiveWindow.SetContent(container.NewAppTabs(pages.CreateLivePage()))
-
 	settings.LiveInfoWindow.SetContent(container.NewAppTabs(
 		pages.CreateLiveInfoContainer(),
 		pages.PushVideoPage(),

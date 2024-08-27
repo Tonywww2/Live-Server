@@ -30,5 +30,9 @@ func loadConfig() {
 
 	case "Test":
 		config.LoadConfigTest()
+
+	default:
+		config.LoadConfigTest()
 	}
+
 }

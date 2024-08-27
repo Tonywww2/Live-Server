@@ -242,7 +242,7 @@ func CreateLiveInfoContainer() *container.TabItem {
 		clipboard.Write(clipboard.FmtText, []byte(infoRtmp.Text))
 	})
 
-	infoCheckRtmpStream = widget.NewButtonWithIcon("Streaming", theme.QuestionIcon(), func() {
+	infoCheckRtmpStream = widget.NewButtonWithIcon("Check", theme.QuestionIcon(), func() {
 		response, err := http.Get(config.Config.RtmpListUrl)
 		if err != nil {
 			settings.TreatError(err, response)

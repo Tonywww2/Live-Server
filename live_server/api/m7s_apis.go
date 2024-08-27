@@ -32,6 +32,7 @@ func (a *M7sApi) RegisterRouter(server *GinServer) {
 	server.POST("/pushVideoToStream", a.PushVideoToStream)
 	server.POST("/pushStreamToRtmp", a.PushStreamToRtmp)
 	server.POST("/endStream", a.EndStreamAPI)
+
 	server.StaticFS("/records", http.Dir(config.Config.M7sRecordDir))
 }
 
@@ -40,8 +41,9 @@ func (a *M7sApi) PushVideoToStream(c *gin.Context) {
 	path := c.PostForm("path")
 
 	filterGet := bson.D{{"stream_id", streamID}}
+	sort := bson.D{}
 
-	res, err := db.FindLive(a.LiveColl, filterGet)
+	res, err := db.FindLive(a.LiveColl, filterGet, sort)
 
 	if err != nil || len(*res) == 0 {
 		c.JSON(http.StatusNotAcceptable, "Invalid Live")
@@ -61,7 +63,6 @@ func (a *M7sApi) PushVideoToStream(c *gin.Context) {
 
 	parseURL.RawQuery = params.Encode()
 	urlPathWithParams := parseURL.String()
-	//fmt.Println(urlPathWithParams)
 	resp, err := http.Get(urlPathWithParams)
 	if err != nil {
 		log.Println("err")
@@ -78,7 +79,7 @@ func (a *M7sApi) PushVideoToStream(c *gin.Context) {
 
 	(*res)[0].IsStreamed = true
 	if !a.StartRecording(streamID, "flv") {
-		log.Println("err")
+		log.Println("Error Starting recording")
 		return
 	}
 	fmt.Println("Start Recording " + streamID)
@@ -99,10 +100,14 @@ func (a *M7sApi) PushStreamToRtmp(c *gin.Context) {
 	streamID := c.PostForm("stream_id")
 	rtmpAddr := c.PostForm("rtmp_addr")
 
-	filterGet := bson.D{{"streamID", streamID}}
-	res, err := db.FindLive(a.LiveColl, filterGet)
+	filterGet := bson.D{{"stream_id", streamID}}
+	sort := bson.D{}
+	res, err := db.FindLive(a.LiveColl, filterGet, sort)
 	if err != nil || len(*res) == 0 {
 		c.JSON(http.StatusNotFound, "Not found in DB")
+		log.Println(streamID)
+		log.Println(*res)
+		log.Println("Not found in DB")
 		return
 	}
 
@@ -138,6 +143,7 @@ func (a *M7sApi) PushStreamToRtmp(c *gin.Context) {
 
 	} else {
 		c.String(http.StatusNotFound, "Live not streamed yet")
+		log.Println("Live not streamed yet")
 
 	}
 

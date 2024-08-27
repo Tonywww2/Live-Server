@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"live_server/settings"
 )
 
@@ -14,7 +15,10 @@ func CheckDBContains(coll *mongo.Collection, filter bson.D) bool {
 	err := coll.FindOne(context.TODO(), filter).Decode(&result)
 
 	if err != nil {
-		return errors.Is(err, mongo.ErrNoDocuments)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return false
+		}
+		panic(err)
 	}
 	return true
 
@@ -29,8 +33,8 @@ func InsertLive(coll *mongo.Collection, live *settings.Live) bool {
 	return true
 }
 
-func FindLive(coll *mongo.Collection, filter bson.D) (*[]settings.Live, error) {
-	cursor, err := coll.Find(context.TODO(), filter)
+func FindLive(coll *mongo.Collection, filter bson.D, sort bson.D) (*[]settings.Live, error) {
+	cursor, err := coll.Find(context.TODO(), filter, options.Find().SetSort(sort))
 	defer cursor.Close(context.TODO())
 	if err != nil {
 		return nil, err
