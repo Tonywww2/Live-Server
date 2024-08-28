@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"io"
-	"io/ioutil"
 	"live_server/db"
 	"log"
 	"net/http"
@@ -17,21 +15,21 @@ import (
 )
 
 type M7sApi struct {
-	LiveColl *mongo.Collection
+	LiveColl *db.LiveCollStruct
 }
 
 // 这里是构造函数
 func NewM7sApi() *M7sApi {
 	return &M7sApi{
-		LiveColl: db.GetCollection("live_list"),
+		&db.LiveCollStruct{db.LiveDataBase.GetCollection("live_list")},
 	}
 }
 
 // 不同api 处理各自路由
 func (a *M7sApi) RegisterRouter(server *GinServer) {
-	server.POST("/pushVideoToStream", a.PushVideoToStream)
-	server.POST("/pushStreamToRtmp", a.PushStreamToRtmp)
-	server.POST("/endStream", a.EndStreamAPI)
+	server.POST("/live/pushVideoToStream", a.PushVideoToStream)
+	server.POST("/live/pushStreamToRtmp", a.PushStreamToRtmp)
+	server.POST("/live/endStream", a.EndStreamAPI)
 
 	server.StaticFS("/records", http.Dir(config.Config.M7sRecordDir))
 }
@@ -43,7 +41,7 @@ func (a *M7sApi) PushVideoToStream(c *gin.Context) {
 	filterGet := bson.D{{"stream_id", streamID}}
 	sort := bson.D{}
 
-	res, err := db.FindLive(a.LiveColl, filterGet, sort)
+	res, err := a.LiveColl.FindLive(filterGet, sort)
 
 	if err != nil || len(*res) == 0 {
 		c.JSON(http.StatusNotAcceptable, "Invalid Live")
@@ -70,7 +68,7 @@ func (a *M7sApi) PushVideoToStream(c *gin.Context) {
 		return
 	}
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println("err")
 		c.JSON(http.StatusInternalServerError, err)
@@ -78,7 +76,7 @@ func (a *M7sApi) PushVideoToStream(c *gin.Context) {
 	}
 
 	(*res)[0].IsStreamed = true
-	if !a.StartRecording(streamID, "flv") {
+	if !a.StartRecording(streamID, "fmp4") {
 		log.Println("Error Starting recording")
 		return
 	}
@@ -87,7 +85,7 @@ func (a *M7sApi) PushVideoToStream(c *gin.Context) {
 	filter := bson.D{{"stream_id", streamID}}
 	update := bson.D{{"$set", (*res)[0]}}
 
-	if db.UpdateLive(a.LiveColl, filter, update) != nil {
+	if a.LiveColl.UpdateLive(filter, update) != nil {
 		fmt.Println("err", err)
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -102,7 +100,7 @@ func (a *M7sApi) PushStreamToRtmp(c *gin.Context) {
 
 	filterGet := bson.D{{"stream_id", streamID}}
 	sort := bson.D{}
-	res, err := db.FindLive(a.LiveColl, filterGet, sort)
+	res, err := a.LiveColl.FindLive(filterGet, sort)
 	if err != nil || len(*res) == 0 {
 		c.JSON(http.StatusNotFound, "Not found in DB")
 		log.Println(streamID)
@@ -169,7 +167,6 @@ func (a *M7sApi) EndStreamAPI(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
-
 	parseURL.RawQuery = params.Encode()
 	urlPathWithParams := parseURL.String()
 	fmt.Println(urlPathWithParams)
@@ -202,7 +199,7 @@ func (a *M7sApi) StartRecording(streamPath string, tp string) bool {
 	params.Set("type", tp)
 	parseURL, err := url.Parse(config.Config.RecordStartURL)
 	if err != nil {
-		log.Println("err")
+		log.Println("Error formating url")
 		return false
 	}
 
@@ -211,13 +208,13 @@ func (a *M7sApi) StartRecording(streamPath string, tp string) bool {
 	fmt.Println(urlPathWithParams)
 	resp, err := http.Get(urlPathWithParams)
 	if err != nil {
-		log.Println("err")
+		log.Println("Error with m7s")
 		return false
 	}
 	defer resp.Body.Close()
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Println("err")
+		log.Println("Error analyzing response")
 		return false
 	}
 	fmt.Println(string(b))
@@ -243,7 +240,7 @@ func (a *M7sApi) StopRecording(streamPath string, tp string) bool {
 		return false
 	}
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println("err")
 		return false

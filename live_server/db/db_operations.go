@@ -10,7 +10,11 @@ import (
 	"live_server/settings"
 )
 
-func CheckDBContains(coll *mongo.Collection, filter bson.D) bool {
+type LiveCollStruct struct {
+	*mongo.Collection
+}
+
+func (coll *LiveCollStruct) CheckDBContains(filter bson.D) bool {
 	var result settings.Live
 	err := coll.FindOne(context.TODO(), filter).Decode(&result)
 
@@ -24,7 +28,7 @@ func CheckDBContains(coll *mongo.Collection, filter bson.D) bool {
 
 }
 
-func InsertLive(coll *mongo.Collection, live *settings.Live) bool {
+func (coll *LiveCollStruct) InsertLive(live *settings.Live) bool {
 	res, er := coll.InsertOne(context.TODO(), live)
 	if er != nil {
 		return false
@@ -33,7 +37,7 @@ func InsertLive(coll *mongo.Collection, live *settings.Live) bool {
 	return true
 }
 
-func FindLive(coll *mongo.Collection, filter bson.D, sort bson.D) (*[]settings.Live, error) {
+func (coll *LiveCollStruct) FindLive(filter bson.D, sort bson.D) (*[]settings.Live, error) {
 	cursor, err := coll.Find(context.TODO(), filter, options.Find().SetSort(sort))
 	defer cursor.Close(context.TODO())
 	if err != nil {
@@ -48,7 +52,7 @@ func FindLive(coll *mongo.Collection, filter bson.D, sort bson.D) (*[]settings.L
 
 }
 
-func UpdateLive(coll *mongo.Collection, filter bson.D, update bson.D) error {
+func (coll *LiveCollStruct) UpdateLive(filter bson.D, update bson.D) error {
 	res, err := coll.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		return err

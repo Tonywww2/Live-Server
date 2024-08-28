@@ -11,7 +11,7 @@ import (
 func main() {
 	loadConfig()
 
-	db.InitDB()
+	db.LiveDataBase = db.InitDB()
 	//初始话httpserver
 	api.Initialize().RegisterRouters(api.NewLiveApi(), api.NewM7sApi()).Listen()
 

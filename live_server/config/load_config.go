@@ -20,14 +20,14 @@ type configuration struct {
 }
 
 var (
-	Config configuration
+	Config *configuration
 )
 
 func LoadConfigDev() {
-	file, _ := os.Open("config_dev.json")
+	file, _ := os.Open("config.json")
 	defer file.Close()
 	decoder := json.NewDecoder(file)
-	Config = configuration{}
+	Config = &configuration{}
 	err := decoder.Decode(&Config)
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -38,7 +38,7 @@ func LoadConfigTest() {
 	file, _ := os.Open("config_test.json")
 	defer file.Close()
 	decoder := json.NewDecoder(file)
-	Config = configuration{}
+	Config = &configuration{}
 	err := decoder.Decode(&Config)
 	if err != nil {
 		fmt.Println("Error:", err)

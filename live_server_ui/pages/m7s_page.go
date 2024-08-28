@@ -114,7 +114,7 @@ func EndStreamPage() *container.TabItem {
 
 		payload := url.Values{
 			"streamPath": {text},
-			"type":       {"flv"},
+			"type":       {"fmp4"},
 		}
 		response, err := http.PostForm(config.Config.EndStreamUrl, payload)
 		settings.TreatError(err, response)

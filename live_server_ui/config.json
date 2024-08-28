@@ -1,10 +1,11 @@
 {
-  "create_live_url": "http://localhost:8082/createLive",
-  "get_all_live_url": "http://localhost:8082/getAllLive",
-  "fuzzy_search_live_url": "http://localhost:8082/fuzzySearchLive",
-  "to_stream_url": "http://localhost:8082/pushVideoToStream",
-  "to_rtmp_url": "http://localhost:8082/pushStreamToRtmp",
-  "end_stream_url": "http://localhost:8082/endStream",
-  "get_records_url": "http://localhost:8082/getRecordList",
-  "rtmp_list_url": "http://localhost:8080/rtmp/api/list"
+  "create_live_url": "http://localhost:8082/live/createLive",
+  "get_all_live_url": "http://localhost:8082/live/getAllLive",
+  "fuzzy_search_live_url": "http://localhost:8082/live/fuzzySearchLive",
+  "to_stream_url": "http://localhost:8082/live/pushVideoToStream",
+  "to_rtmp_url": "http://localhost:8082/live/pushStreamToRtmp",
+  "end_stream_url": "http://localhost:8082/live/endStream",
+  "get_records_url": "http://localhost:8082/live/getRecordList",
+  "rtmp_list_url": "http://localhost:8080/rtmp/api/list",
+  "records_url": "http://localhost:8082/records"
 }

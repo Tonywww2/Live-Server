@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"os"
 	"strconv"
@@ -17,22 +16,22 @@ import (
 )
 
 type LiveApi struct {
-	LiveColl *mongo.Collection
+	LiveColl *db.LiveCollStruct
 }
 
 // 这里是构造函数
 func NewLiveApi() *LiveApi {
 	return &LiveApi{
-		LiveColl: db.GetCollection("live_list"),
+		&db.LiveCollStruct{db.LiveDataBase.GetCollection("live_list")},
 	}
 }
 
 func (a *LiveApi) RegisterRouter(server *GinServer) {
 	// RegisterRouter /******************Start 注册直播间路由*******************/
-	server.POST("/createLive", a.CreateLive)
-	server.GET("/getAllLive", a.GetAllLive)
-	server.GET("/fuzzySearchLive", a.FuzzySearchLive)
-	server.GET("/getRecordList", a.GetRecordList)
+	server.POST("/live/createLive", a.CreateLive)
+	//server.GET("/getAllLive", a.GetAllLive)
+	server.GET("/live/fuzzySearchLive", a.FuzzySearchLive)
+	server.GET("/live/getRecordList", a.GetRecordList)
 	// RegisterRouter /******************End 注册直播间路由*******************/
 }
 
@@ -43,7 +42,7 @@ func (a *LiveApi) CreateLive(c *gin.Context) {
 
 	filter := bson.D{{"name", name}}
 
-	if !db.CheckDBContains(a.LiveColl, filter) {
+	if !a.LiveColl.CheckDBContains(filter) {
 		streamID := settings.ServiceName + "/" + strconv.Itoa(id)
 		newLive := settings.Live{
 			Name:      name,
@@ -53,7 +52,7 @@ func (a *LiveApi) CreateLive(c *gin.Context) {
 			StreamID:  streamID,
 		}
 
-		if db.InsertLive(a.LiveColl, &newLive) {
+		if a.LiveColl.InsertLive(&newLive) {
 			c.JSON(http.StatusOK, newLive)
 			fmt.Println(name, poster, streamID)
 
@@ -71,7 +70,7 @@ func (a *LiveApi) GetAllLive(c *gin.Context) {
 	filter := bson.D{{}}
 	sort := bson.D{{"StartTime", 1}}
 
-	results, err := db.FindLive(a.LiveColl, filter, sort)
+	results, err := a.LiveColl.FindLive(filter, sort)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
@@ -87,7 +86,7 @@ func (a *LiveApi) FuzzySearchLive(c *gin.Context) {
 		Value: bson.M{"$regex": primitive.Regex{Pattern: ".*" + name + ".*", Options: "i"}}}}
 	sort := bson.D{{"StartTime", 1}}
 
-	res, err := db.FindLive(a.LiveColl, filter, sort)
+	res, err := a.LiveColl.FindLive(filter, sort)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
@@ -106,7 +105,11 @@ func (a *LiveApi) GetRecordList(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err)
 
 	} else {
-		c.JSON(http.StatusOK, files)
+		res := make(map[int]string)
+		for k, v := range files {
+			res[k] = v
+		}
+		c.JSON(http.StatusOK, res)
 	}
 }
 

@@ -12,11 +12,15 @@ import (
 )
 
 var (
-	MongoClient   *mongo.Client
-	MongoDatabase string
+	LiveDataBase *LiveDB
 )
 
-func InitDB() {
+type LiveDB struct {
+	MongoClient   *mongo.Client
+	MongoDatabase string
+}
+
+func InitDB() *LiveDB {
 	mongoUri := config.Config.MongodbUri
 	if mongoUri == "" {
 		log.Fatal("MongoDB URI is not provided in the configuration")
@@ -47,11 +51,11 @@ func InitDB() {
 		log.Fatalf("Failed to create MongoDB client: %v", err)
 	}
 	log.Println("Connected to MongoDB!")
-	MongoClient = client
-	MongoDatabase = dbName
+
+	return &LiveDB{client, dbName}
 }
 
 // 获取不同的集合名
-func GetCollection(collection string) *mongo.Collection {
-	return MongoClient.Database(MongoDatabase).Collection(collection)
+func (d *LiveDB) GetCollection(collection string) *mongo.Collection {
+	return d.MongoClient.Database(d.MongoDatabase).Collection(collection)
 }

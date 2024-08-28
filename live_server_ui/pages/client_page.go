@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"live_server_ui/config"
 	"live_server_ui/settings"
@@ -81,13 +82,34 @@ func CreateClientContainer() *fyne.Container {
 
 		}
 		defer response.Body.Close()
-		body, er := io.ReadAll(response.Body)
-		if er != nil {
-			dialog.ShowError(er, settings.MainWindow)
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			dialog.ShowError(err, settings.MainWindow)
 			return
 
 		}
-		dialog.ShowInformation("Records", string(body), settings.MainWindow)
+		var res map[int]string
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+		var recordLists []fyne.CanvasObject
+		for _, v := range res {
+			str := strings.Split(v, "/")
+			recordUrl, err := url.Parse(config.Config.RecordsUrl + strings.Split(v, "record")[1])
+			if err != nil {
+				dialog.ShowError(err, settings.MainWindow)
+				return
+			}
+			recordLists = append(recordLists, &widget.Hyperlink{Text: str[len(str)-1], URL: recordUrl})
+		}
+		vList := container.NewVScroll(
+			container.NewVBox(recordLists...),
+		)
+
+		vList.SetMinSize(fyne.NewSize(200, 300))
+
+		dialog.ShowCustom("Records", "OK", vList, settings.MainWindow)
 
 	})
 
@@ -104,7 +126,7 @@ func CreateClientContainer() *fyne.Container {
 			searchEntry,
 			container.NewHBox(searchButton, recordListButton),
 		),
-		container.NewGridWithColumns(4, widget.NewLabel("Name"), widget.NewLabel("Created Time"), widget.NewLabel("Is Streaming(ed)")),
+		container.NewGridWithColumns(4, widget.NewLabel("Name"), widget.NewLabel("Created Time"), widget.NewLabel("Is Streaming(ed)"), widget.NewLabel("Details")),
 		createCustomHBox(gI(), showingNameLabels[idx-1], showingTimeLabels[idx-1], showingStreamingLabels[idx-1], infoButtons[idx-1]),
 		createCustomHBox(gI(), showingNameLabels[idx-1], showingTimeLabels[idx-1], showingStreamingLabels[idx-1], infoButtons[idx-1]),
 		createCustomHBox(gI(), showingNameLabels[idx-1], showingTimeLabels[idx-1], showingStreamingLabels[idx-1], infoButtons[idx-1]),
