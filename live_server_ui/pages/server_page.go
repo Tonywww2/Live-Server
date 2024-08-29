@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"fyne.io/fyne/v2"
@@ -9,13 +10,15 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"io"
+	"live_server_ui/config"
+	"live_server_ui/settings"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
-
-	"live_server_ui/config"
-	"live_server_ui/settings"
 )
 
 func CreateLivePage() *container.TabItem {
@@ -24,22 +27,57 @@ func CreateLivePage() *container.TabItem {
 
 	file := dialog.NewFileOpen(func(f fyne.URIReadCloser, err error) {
 		if f != nil {
+			defer f.Close()
 			posterUri := strings.Split(f.URI().String(), "//")[1]
+			fileByte, err := os.ReadFile(posterUri)
 
-			file, er := os.ReadFile(posterUri)
-
-			if er != nil {
-				dialog.ShowError(er, settings.NewLiveWindow)
+			if errDealing(err) {
 				return
 			}
 
-			if strings.Split(http.DetectContentType(file), "/")[0] != "image" {
+			if strings.Split(http.DetectContentType(fileByte), "/")[0] != "image" {
 				dialog.ShowInformation("Wrong File Type", "Wrong File Type", settings.NewLiveWindow)
 				return
 			}
 
-			posterLabel.SetText(posterUri)
-			defer f.Close()
+			payload := &bytes.Buffer{}
+			writer := multipart.NewWriter(payload)
+			file, errFile1 := os.Open(posterUri)
+			defer file.Close()
+			part1, errFile1 := writer.CreateFormFile("file", filepath.Base(posterUri))
+			_, errFile1 = io.Copy(part1, file)
+			if errDealing(errFile1) {
+				return
+			}
+
+			err2 := writer.Close()
+			if errDealing(err2) {
+				return
+			}
+
+			client := &http.Client{}
+			req, err3 := http.NewRequest("POST", config.Config.UploadUrl, payload)
+			if errDealing(err3) {
+				return
+			}
+
+			req.Header.Set("Content-Type", writer.FormDataContentType())
+			res, err4 := client.Do(req)
+			if errDealing(err4) {
+				return
+			}
+			defer res.Body.Close()
+
+			body, err5 := io.ReadAll(res.Body)
+			if errDealing(err5) {
+				return
+			}
+
+			if res.StatusCode != http.StatusOK {
+				dialog.ShowInformation(strconv.Itoa(res.StatusCode), string(body), settings.NewLiveWindow)
+				return
+			}
+			posterLabel.SetText(config.Config.ImgUrl + strings.Split(string(body), "live_posters")[1])
 
 		}
 	}, settings.NewLiveWindow)
@@ -63,6 +101,14 @@ func CreateLivePage() *container.TabItem {
 	)
 
 	return container.NewTabItem("Create New Live", livePage)
+}
+
+func errDealing(err error) bool {
+	if err != nil {
+		dialog.ShowError(err, settings.NewLiveWindow)
+		return true
+	}
+	return false
 }
 
 func CreatGetAllPage() *container.TabItem {

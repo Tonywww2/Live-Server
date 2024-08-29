@@ -1,5 +1,6 @@
 {
   "create_live_url": "http://localhost:8082/live/createLive",
+  "upload_url": "http://localhost:8082/live/UploadFile",
   "get_all_live_url": "http://localhost:8082/live/getAllLive",
   "fuzzy_search_live_url": "http://localhost:8082/live/fuzzySearchLive",
   "to_stream_url": "http://localhost:8082/live/pushVideoToStream",
@@ -7,5 +8,6 @@
   "end_stream_url": "http://localhost:8082/live/endStream",
   "get_records_url": "http://localhost:8082/live/getRecordList",
   "rtmp_list_url": "http://localhost:8080/rtmp/api/list",
-  "records_url": "http://localhost:8082/records"
+  "records_url": "http://localhost:8082/records",
+  "img_url": "http://localhost:8082/live_posters"
 }

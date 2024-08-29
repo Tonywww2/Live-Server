@@ -8,10 +8,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"live_server/settings"
+	"log"
 )
 
 type LiveCollStruct struct {
 	*mongo.Collection
+}
+
+func NewLiveColl() *LiveCollStruct {
+	return &LiveCollStruct{
+		LiveDataBase.GetCollection("live_list"),
+	}
 }
 
 func (coll *LiveCollStruct) CheckDBContains(filter bson.D) bool {
@@ -57,6 +64,6 @@ func (coll *LiveCollStruct) UpdateLive(filter bson.D, update bson.D) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Update: ", res)
+	log.Printf("Update:%v ", res)
 	return nil
 }

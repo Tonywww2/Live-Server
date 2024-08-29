@@ -1,7 +1,9 @@
 package pages
 
 import (
+	"bufio"
 	"encoding/json"
+	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -10,6 +12,8 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"golang.design/x/clipboard"
+	"image"
+	"image/png"
 	"io"
 	"log"
 	"net/http"
@@ -215,10 +219,19 @@ func getFunc(i int) func() {
 			infoStreamed.SetText(settings.ToString(showingLives[i]["IsStreamed"]))
 
 			img := settings.ToString(showingLives[i]["Poster"])
+			//fmt.Println(img)
 			if img == "" {
-				img = "icon.png"
+				infoImg.File = "icon.png"
+			} else {
+				im := saveImage(img)
+				fmt.Println(im)
+				if im == nil {
+					infoImg.File = "icon.png"
+				} else {
+					infoImg.File = ""
+					infoImg.Image = im
+				}
 			}
-			infoImg.File = img
 
 			settings.StreamIdEntry.SetText(settings.ToString(showingLives[i]["StreamID"]))
 
@@ -308,4 +321,26 @@ func CreateLiveInfoContainer() *container.TabItem {
 		//container.NewGridWithColumns(3, infoStartStream, infoPushToRtmp, infoStopStream),
 	)))
 
+}
+
+func saveImage(url string) image.Image {
+	response, err := http.Get(url)
+	if err != nil {
+		return nil
+	}
+
+	defer response.Body.Close()
+	// 获得get请求响应的reader对象
+	reader := bufio.NewReaderSize(response.Body, 32*1024)
+
+	//file, err := os.Create(strings.Split(url, "./cache_img/"+"live_posters")[1])
+	if err != nil {
+		panic(err)
+	}
+	img, err := png.Decode(reader)
+	if err != nil {
+		return nil
+	}
+	//fmt.Println(img)
+	return img
 }

@@ -22,8 +22,14 @@ type LiveApi struct {
 // 这里是构造函数
 func NewLiveApi() *LiveApi {
 	return &LiveApi{
-		&db.LiveCollStruct{db.LiveDataBase.GetCollection("live_list")},
+		db.NewLiveColl(),
 	}
+}
+
+// LiveForm 用于绑定请求参数
+type LiveForm struct {
+	Name   string `form:"name" binding:"required"`
+	Poster string `form:"poster" binding:"required"`
 }
 
 func (a *LiveApi) RegisterRouter(server *GinServer) {
@@ -32,53 +38,59 @@ func (a *LiveApi) RegisterRouter(server *GinServer) {
 	//server.GET("/getAllLive", a.GetAllLive)
 	server.GET("/live/fuzzySearchLive", a.FuzzySearchLive)
 	server.GET("/live/getRecordList", a.GetRecordList)
+	server.POST("/live/UploadFile", a.UploadFile)
+	server.StaticFS("/live_posters", http.Dir("./uploads/live_posters/"))
 	// RegisterRouter /******************End 注册直播间路由*******************/
 }
 
 func (a *LiveApi) CreateLive(c *gin.Context) {
-	name := c.PostForm("name")
-	poster := c.PostForm("poster")
-	id := settings.GenNewID()
 
-	filter := bson.D{{"name", name}}
-
-	if !a.LiveColl.CheckDBContains(filter) {
-		streamID := settings.ServiceName + "/" + strconv.Itoa(id)
-		newLive := settings.Live{
-			Name:      name,
-			Poster:    poster,
-			StartTime: time.Now().Round(time.Second),
-			RtmpAddr:  config.Config.RtmpPushPullURL + streamID,
-			StreamID:  streamID,
-		}
-
-		if a.LiveColl.InsertLive(&newLive) {
-			c.JSON(http.StatusOK, newLive)
-			fmt.Println(name, poster, streamID)
-
-		} else {
-			c.JSON(http.StatusNotAcceptable, "DB Error")
-		}
-
-	} else {
-		c.JSON(http.StatusConflict, "Live already found")
-	}
-
-}
-
-func (a *LiveApi) GetAllLive(c *gin.Context) {
-	filter := bson.D{{}}
-	sort := bson.D{{"StartTime", 1}}
-
-	results, err := a.LiveColl.FindLive(filter, sort)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+	var liveForm LiveForm
+	if err := c.ShouldBind(&liveForm); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, results)
+	id := settings.GenNewID()
+
+	filter := bson.D{{"name", liveForm.Name}}
+	if a.LiveColl.CheckDBContains(filter) {
+		c.JSON(http.StatusConflict, "Live already found")
+		return
+	}
+
+	streamID := settings.ServiceName + "/" + strconv.Itoa(id)
+	newLive := settings.Live{
+		Name:      liveForm.Name,
+		Poster:    liveForm.Poster,
+		StartTime: time.Now().Round(time.Second),
+		RtmpAddr:  config.Config.RtmpPushPullURL + streamID,
+		StreamID:  streamID,
+	}
+
+	if a.LiveColl.InsertLive(&newLive) {
+		c.JSON(http.StatusOK, newLive)
+		fmt.Printf("新直播流创建成功: %s, %s, %s\n", liveForm.Name, liveForm.Poster, streamID)
+	} else {
+		c.JSON(http.StatusInternalServerError, "数据库错误")
+	}
+
 }
+
+//// 数据库服务流量内存，自己的业务服务器内存也吃不消，前端也处理不过来，采用分页查询
+//func (a *LiveApi) GetAllLive(c *gin.Context) {
+//	filter := bson.D{{}}
+//	sort := bson.D{{"StartTime", 1}}
+//
+//	results, err := a.LiveColl.FindLive(filter, sort)
+//
+//	if err != nil {
+//		c.JSON(http.StatusInternalServerError, err)
+//		return
+//	}
+//
+//	c.JSON(http.StatusOK, results)
+//}
 
 func (a *LiveApi) FuzzySearchLive(c *gin.Context) {
 	name := c.Query("name")
@@ -96,6 +108,25 @@ func (a *LiveApi) FuzzySearchLive(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func (a *LiveApi) UploadFile(c *gin.Context) {
+	// 从表单中获取文件
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("获取文件错误: %s", err.Error()))
+		return
+	}
+
+	savePath := "./uploads/live_posters/" + file.Filename
+	if err := c.SaveUploadedFile(file, savePath); err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("保存文件错误: %s", err.Error()))
+		return
+	}
+
+	// 返回上传成功信息
+	c.String(http.StatusOK, fmt.Sprintf(savePath))
+}
+
+// todo 这个接口是有问题的，看着只是读取给定目录的全部文件供客户端选择
 func (a *LiveApi) GetRecordList(c *gin.Context) {
 	var files []string
 	files, err := a.GetAllFile(config.Config.M7sRecordDir, files)
