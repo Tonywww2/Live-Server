@@ -1,13 +1,13 @@
 {
-  "create_live_url": "http://localhost:8082/live/createLive",
-  "upload_url": "http://localhost:8082/live/UploadFile",
-  "get_all_live_url": "http://localhost:8082/live/getAllLive",
-  "fuzzy_search_live_url": "http://localhost:8082/live/fuzzySearchLive",
-  "to_stream_url": "http://localhost:8082/live/pushVideoToStream",
-  "to_rtmp_url": "http://localhost:8082/live/pushStreamToRtmp",
-  "end_stream_url": "http://localhost:8082/live/endStream",
-  "get_records_url": "http://localhost:8082/live/getRecordList",
-  "rtmp_list_url": "http://localhost:8080/rtmp/api/list",
-  "records_url": "http://localhost:8082/records",
-  "img_url": "http://localhost:8082/live_posters"
+  "create_live_url": "http://192.168.1.113:8082/live/createLive",
+  "upload_url": "http://192.168.1.113:8082/live/UploadFile",
+  "get_all_live_url": "http://192.168.1.113:8082/live/getAllLive",
+  "fuzzy_search_live_url": "http://192.168.1.113:8082/live/fuzzySearchLive",
+  "to_stream_url": "http://192.168.1.113:8082/live/pushVideoToStream",
+  "to_rtmp_url": "http://192.168.1.113:8082/live/pushStreamToRtmp",
+  "end_stream_url": "http://192.168.1.113:8082/live/endStream",
+  "get_records_url": "http://192.168.1.113:8082/live/getRecordList",
+  "rtmp_list_url": "http://192.168.1.113:8080/rtmp/api/list",
+  "records_url": "http://192.168.1.113:8082/records",
+  "img_url": "http://192.168.1.113:8082/live_posters"
 }
