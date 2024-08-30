@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"io"
 	"live_server/db"
 	"log"
@@ -39,9 +40,9 @@ func (a *M7sApi) PushVideoToStream(c *gin.Context) {
 	path := c.PostForm("path")
 
 	filterGet := bson.D{{"stream_id", streamID}}
-	sort := bson.D{}
+	findOptions := &options.FindOptions{}
 
-	res, err := a.LiveColl.FindLive(filterGet, sort)
+	res, err := a.LiveColl.FindLive(filterGet, findOptions)
 
 	if err != nil || len(*res) == 0 {
 		c.JSON(http.StatusNotAcceptable, "Invalid Live")
@@ -99,8 +100,8 @@ func (a *M7sApi) PushStreamToRtmp(c *gin.Context) {
 	rtmpAddr := c.PostForm("rtmp_addr")
 
 	filterGet := bson.D{{"stream_id", streamID}}
-	sort := bson.D{}
-	res, err := a.LiveColl.FindLive(filterGet, sort)
+	findOptions := &options.FindOptions{}
+	res, err := a.LiveColl.FindLive(filterGet, findOptions)
 	if err != nil || len(*res) == 0 {
 		c.JSON(http.StatusNotFound, "Not found in DB")
 		log.Println(streamID)

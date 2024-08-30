@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"os"
 	"strconv"
@@ -39,7 +40,9 @@ func (a *LiveApi) RegisterRouter(server *GinServer) {
 	server.GET("/live/fuzzySearchLive", a.FuzzySearchLive)
 	server.GET("/live/getRecordList", a.GetRecordList)
 	server.POST("/live/UploadFile", a.UploadFile)
+	server.POST("/live/UploadVideo", a.UploadVideo)
 	server.StaticFS("/live_posters", http.Dir("./uploads/live_posters/"))
+	server.StaticFS("/live_videos", http.Dir("./uploads/live_videos/"))
 	// RegisterRouter /******************End 注册直播间路由*******************/
 }
 
@@ -94,11 +97,25 @@ func (a *LiveApi) CreateLive(c *gin.Context) {
 
 func (a *LiveApi) FuzzySearchLive(c *gin.Context) {
 	name := c.Query("name")
+	pageIndex, err := strconv.Atoi(c.Query("pageIndex"))
+	if err != nil {
+		pageIndex = 0
+	}
+	pageSize, err := strconv.Atoi(c.Query("pageSize"))
+	if err != nil {
+		pageSize = 10
+	}
+	findOptions := &options.FindOptions{}
+	findOptions.SetSort(bson.D{{"start_time", 1}})
+	if pageSize > 0 {
+		findOptions.SetLimit(int64(pageSize))
+		findOptions.SetSkip(int64(pageSize * pageIndex))
+	}
+
 	filter := bson.D{bson.E{Key: "name",
 		Value: bson.M{"$regex": primitive.Regex{Pattern: ".*" + name + ".*", Options: "i"}}}}
-	sort := bson.D{{"StartTime", 1}}
 
-	res, err := a.LiveColl.FindLive(filter, sort)
+	res, err := a.LiveColl.FindLive(filter, findOptions)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
@@ -119,6 +136,26 @@ func (a *LiveApi) UploadFile(c *gin.Context) {
 	savePath := "./uploads/live_posters/" + file.Filename
 	if err := c.SaveUploadedFile(file, savePath); err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("保存文件错误: %s", err.Error()))
+		return
+	}
+
+	// 返回上传成功信息
+	c.String(http.StatusOK, fmt.Sprintf(savePath))
+}
+
+func (a *LiveApi) UploadVideo(c *gin.Context) {
+	// 从表单中获取文件
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("获取文件错误: %s", err.Error()))
+		//fmt.Println("获取文件错误: %s", err.Error())
+		return
+	}
+
+	savePath := "./uploads/live_videos/" + file.Filename
+	if err := c.SaveUploadedFile(file, savePath); err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("保存文件错误: %s", err.Error()))
+		//fmt.Println("保存文件错误: %s", err.Error())
 		return
 	}
 

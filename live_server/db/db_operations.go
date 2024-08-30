@@ -44,8 +44,8 @@ func (coll *LiveCollStruct) InsertLive(live *settings.Live) bool {
 	return true
 }
 
-func (coll *LiveCollStruct) FindLive(filter bson.D, sort bson.D) (*[]settings.Live, error) {
-	cursor, err := coll.Find(context.TODO(), filter, options.Find().SetSort(sort))
+func (coll *LiveCollStruct) FindLive(filter bson.D, findOptions *options.FindOptions) (*[]settings.Live, error) {
+	cursor, err := coll.Find(context.TODO(), filter, findOptions)
 	defer cursor.Close(context.TODO())
 	if err != nil {
 		return nil, err

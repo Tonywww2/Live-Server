@@ -9,6 +9,8 @@
       <excludeFolder url="file://$MODULE_DIR$/m7s/.m7s" />
       <excludeFolder url="file://$MODULE_DIR$/m7s/record" />
       <excludeFolder url="file://$MODULE_DIR$/live_server/m7s" />
+      <excludeFolder url="file://$MODULE_DIR$/live_server/uploads/live_posters" />
+      <excludeFolder url="file://$MODULE_DIR$/live_server/uploads" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

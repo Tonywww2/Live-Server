@@ -2,8 +2,6 @@ package pages
 
 import (
 	"bytes"
-	"encoding/json"
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
@@ -31,7 +29,7 @@ func CreateLivePage() *container.TabItem {
 			posterUri := strings.Split(f.URI().String(), "//")[1]
 			fileByte, err := os.ReadFile(posterUri)
 
-			if errDealing(err) {
+			if errDealing(err, &settings.NewLiveWindow) {
 				return
 			}
 
@@ -46,30 +44,30 @@ func CreateLivePage() *container.TabItem {
 			defer file.Close()
 			part1, errFile1 := writer.CreateFormFile("file", filepath.Base(posterUri))
 			_, errFile1 = io.Copy(part1, file)
-			if errDealing(errFile1) {
+			if errDealing(errFile1, &settings.NewLiveWindow) {
 				return
 			}
 
 			err2 := writer.Close()
-			if errDealing(err2) {
+			if errDealing(err2, &settings.NewLiveWindow) {
 				return
 			}
 
 			client := &http.Client{}
 			req, err3 := http.NewRequest("POST", config.Config.UploadUrl, payload)
-			if errDealing(err3) {
+			if errDealing(err3, &settings.NewLiveWindow) {
 				return
 			}
 
 			req.Header.Set("Content-Type", writer.FormDataContentType())
 			res, err4 := client.Do(req)
-			if errDealing(err4) {
+			if errDealing(err4, &settings.NewLiveWindow) {
 				return
 			}
 			defer res.Body.Close()
 
 			body, err5 := io.ReadAll(res.Body)
-			if errDealing(err5) {
+			if errDealing(err5, &settings.NewLiveWindow) {
 				return
 			}
 
@@ -77,7 +75,7 @@ func CreateLivePage() *container.TabItem {
 				dialog.ShowInformation(strconv.Itoa(res.StatusCode), string(body), settings.NewLiveWindow)
 				return
 			}
-			posterLabel.SetText(config.Config.ImgUrl + strings.Split(string(body), "live_posters")[1])
+			posterLabel.SetText(config.Config.PosterUrl + strings.Split(string(body), "live_posters")[1])
 
 		}
 	}, settings.NewLiveWindow)
@@ -103,62 +101,10 @@ func CreateLivePage() *container.TabItem {
 	return container.NewTabItem("Create New Live", livePage)
 }
 
-func errDealing(err error) bool {
+func errDealing(err error, window *fyne.Window) bool {
 	if err != nil {
-		dialog.ShowError(err, settings.NewLiveWindow)
+		dialog.ShowError(err, *window)
 		return true
 	}
 	return false
-}
-
-func CreatGetAllPage() *container.TabItem {
-	resultLabel := widget.NewEntry()
-	resultLabel.MultiLine = true
-
-	getButton := widget.NewButton("Get", func() {
-		response, err := http.Get(config.Config.GetAllLiveURL)
-		defer response.Body.Close()
-		if err != nil || response.StatusCode != 200 {
-			dialog.ShowError(err, settings.MainWindow)
-			//panic(err)
-			return
-		}
-
-		var result []map[string]interface{}
-		body, err := io.ReadAll(response.Body)
-		if err == nil {
-			err = json.Unmarshal(body, &result)
-		}
-
-		fmt.Println(result)
-
-		resultText := "Result: \n"
-		i := 0
-		settings.CachedLives = make([]string, 0)
-		for _, v := range result {
-			text := "\"" + settings.ToString(v["Name"]) + "\", " +
-				"\"" + settings.ToString(v["Poster"]) + "\", " +
-				"\"" + settings.ToString(v["StartTime"]) + "\", " +
-				"\"" + settings.ToString(v["RtmpAddr"]) + "\", " +
-				settings.ToString(v["IsStreamed"])
-			resultText += "\"" + settings.ToString(v["StreamID"]) + "\"" + "\n" + text + "\n\n"
-
-			settings.CachedLives = append(settings.CachedLives, settings.ToString(v["Name"])+"//"+settings.ToString(v["StreamID"]))
-			i++
-		}
-		resultLabel.SetText(resultText)
-
-	})
-
-	resultScroll := container.NewScroll(resultLabel)
-	resultScroll.SetMinSize(fyne.NewSize(720, 300))
-
-	getAllPage := container.NewVBox(
-		widget.NewLabel("Get All Lives"),
-		getButton,
-		resultScroll,
-	)
-
-	return container.NewTabItem("Get All Lives", getAllPage)
-
 }

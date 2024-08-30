@@ -13,7 +13,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"golang.design/x/clipboard"
 	"image"
-	"image/png"
 	"io"
 	"log"
 	"net/http"
@@ -26,13 +25,13 @@ import (
 )
 
 var (
-	currentPage      = 1
+	pageIndex        = 0
 	grid             *fyne.Container
 	backButton       fyne.CanvasObject
 	forwardButton    fyne.CanvasObject
 	recordListButton fyne.CanvasObject
 
-	showingLives           []map[string]interface{}
+	//showingLives           []map[string]interface{}
 	showingNameLabels      [10]*widget.Label
 	showingTimeLabels      [10]*widget.Label
 	showingStreamingLabels [10]*widget.Label
@@ -68,13 +67,15 @@ func CreateClientContainer() *fyne.Container {
 	searchButton := widget.NewButtonWithIcon("Search", theme.SearchIcon(), Search)
 
 	backButton = widget.NewButtonWithIcon("", theme.NavigateBackIcon(), func() {
-		currentPage = max(1, currentPage-1)
-		UpdateShowingLives()
+		pageIndex = max(0, pageIndex-1)
+		Search()
 	})
 
 	forwardButton = widget.NewButtonWithIcon("", theme.NavigateNextIcon(), func() {
-		currentPage = min((len(settings.CachedLivesOriginal)/10)+1, currentPage+1)
-		UpdateShowingLives()
+		if len(settings.CachedLivesOriginal) >= 10 {
+			pageIndex++
+			Search()
+		}
 	})
 
 	recordListButton = widget.NewButtonWithIcon("Records", theme.HistoryIcon(), func() {
@@ -150,6 +151,9 @@ func CreateClientContainer() *fyne.Container {
 func Search() {
 	params := url.Values{}
 	params.Set("name", searchEntry.Text)
+	params.Set("pageIndex", strconv.Itoa(pageIndex))
+	params.Set("pageSize", "10")
+
 	parseURL, err := url.Parse(config.Config.FuzzySearchLiveURL)
 	if err != nil {
 		log.Println("err")
@@ -180,23 +184,25 @@ func Search() {
 }
 
 func UpdateShowingLives() {
-	start := (currentPage - 1) * 10
-	end := min(len(settings.CachedLivesOriginal), currentPage*10)
-	showingLives = []map[string]interface{}{}
-	showingLives = append(showingLives, settings.CachedLivesOriginal[start:end]...)
+	//start := (pageIndex - 1) * 10
+	//end := min(len(settings.CachedLivesOriginal), pageIndex*10)
+	//showingLives = []map[string]interface{}{}
+	//showingLives = append(showingLives, settings.CachedLivesOriginal[start:end]...)
+	//showingLives = settings.CachedLivesOriginal
 
-	for k, v := range showingLives {
+	for k, v := range settings.CachedLivesOriginal {
 		showingNameLabels[k].SetText(settings.ToString(v["Name"]))
 		showingTimeLabels[k].SetText(settings.ToString(v["StartTime"]))
 		showingStreamingLabels[k].SetText(settings.ToString(v["IsStreamed"]))
 
 	}
 
-	for i := len(showingLives); i < 10; i++ {
+	for i := len(settings.CachedLivesOriginal); i < 10; i++ {
 		showingNameLabels[i].SetText("")
 		showingTimeLabels[i].SetText("")
+		showingStreamingLabels[i].SetText("")
 	}
-	pageLabel.SetText("Page " + strconv.Itoa(currentPage))
+	pageLabel.SetText("Page " + strconv.Itoa(pageIndex+1))
 
 }
 
@@ -211,20 +217,20 @@ func createCustomHBox(i int, name *widget.Label, time *widget.Label, streaming *
 
 func getFunc(i int) func() {
 	return func() {
-		if i < len(showingLives) {
-			infoName.SetText(settings.ToString(showingLives[i]["Name"]))
-			infoID.SetText(settings.ToString(showingLives[i]["StreamID"]))
-			infoTime.SetText(settings.ToString(showingLives[i]["StartTime"]))
-			infoRtmp.SetText(settings.ToString(showingLives[i]["RtmpAddr"]))
-			infoStreamed.SetText(settings.ToString(showingLives[i]["IsStreamed"]))
+		if i < len(settings.CachedLivesOriginal) {
+			infoName.SetText(settings.ToString(settings.CachedLivesOriginal[i]["Name"]))
+			infoID.SetText(settings.ToString(settings.CachedLivesOriginal[i]["StreamID"]))
+			infoTime.SetText(settings.ToString(settings.CachedLivesOriginal[i]["StartTime"]))
+			infoRtmp.SetText(settings.ToString(settings.CachedLivesOriginal[i]["RtmpAddr"]))
+			infoStreamed.SetText(settings.ToString(settings.CachedLivesOriginal[i]["IsStreamed"]))
 
-			img := settings.ToString(showingLives[i]["Poster"])
+			img := settings.ToString(settings.CachedLivesOriginal[i]["Poster"])
 			//fmt.Println(img)
 			if img == "" {
 				infoImg.File = "icon.png"
 			} else {
 				im := saveImage(img)
-				fmt.Println(im)
+				//fmt.Println(im)
 				if im == nil {
 					infoImg.File = "icon.png"
 				} else {
@@ -233,7 +239,7 @@ func getFunc(i int) func() {
 				}
 			}
 
-			settings.StreamIdEntry.SetText(settings.ToString(showingLives[i]["StreamID"]))
+			settings.StreamIdEntry.SetText(settings.ToString(settings.CachedLivesOriginal[i]["StreamID"]))
 
 			infoCheckRtmpStream.SetIcon(theme.QuestionIcon())
 
@@ -333,13 +339,14 @@ func saveImage(url string) image.Image {
 	// 获得get请求响应的reader对象
 	reader := bufio.NewReaderSize(response.Body, 32*1024)
 
-	//file, err := os.Create(strings.Split(url, "./cache_img/"+"live_posters")[1])
 	if err != nil {
 		panic(err)
 	}
-	img, err := png.Decode(reader)
+	img, _, err := image.Decode(reader)
 	if err != nil {
+		fmt.Println("Decoding Error: ", err)
 		return nil
+
 	}
 	//fmt.Println(img)
 	return img
